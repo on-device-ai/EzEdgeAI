@@ -30,7 +30,4 @@ and put the model file in the project directory.
   
 * Run the EzEdgeAI project:  
 `python diagram-editor.py`
-
-
-
-
+  
