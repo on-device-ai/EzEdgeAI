@@ -63,128 +63,7 @@ class ParameterDialog(QDialog):
         self.button.clicked.connect(self.OK)
     def OK(self):
         self.close()
-
-class PortItem(QGraphicsEllipseItem):
-    """ Represents a port to a subsystem """
-    def __init__(self, name, parent=None):
-        QGraphicsEllipseItem.__init__(self, QRectF(-6,-6,12.0,12.0), parent)
-        self.setCursor(QCursor(QtCore.Qt.CrossCursor))
-        # Properties:
-        self.setBrush(QBrush(Qt.red))
-        # Name:
-        self.name = name
-        self.posCallbacks = []
-        self.setFlag(self.ItemSendsScenePositionChanges, True)
-        # Connection:
-        self.connection = None
-        # BlockItem:
-        self.blockItem = parent
-    def itemChange(self, change, value):
-        if change == self.ItemScenePositionHasChanged:
-            for cb in self.posCallbacks:
-                cb(value)
-            return value
-        return super(PortItem, self).itemChange(change, value)
-    def mousePressEvent(self, event):
-        editor.startConnection(self)
-    def portDisconnection(self):
-        if self.connection is not None :
-            print(self.connection)
-            self.connection.delete()
-            if self.connection.getFromPort() == self :
-                self.connection.getToPort().connection = None
-            elif self.connection.getToPort() == self :
-                self.connection.getFromPort().connection = None
-            self.connection = None
-
-class BlockItem(QGraphicsRectItem):
-    """ 
-    Represents a block in the diagram
-    Has an x and y and width and height
-    width and height can only be adjusted with a tip in the lower right corner.
-
-    - in and output ports
-    - parameters
-    - description
-    """
-    def __init__(self, name='Untitled', parent=None):
-        super(BlockItem, self).__init__(parent)
-        w = 60.0
-        h = 40.0
-        # Properties of the rectangle:
-        self.setPen(QtGui.QPen(QtCore.Qt.blue, 2))
-        self.setBrush(QtGui.QBrush(QtCore.Qt.lightGray))
-        self.setFlags(self.ItemIsSelectable | self.ItemIsMovable)
-        self.setCursor(QCursor(QtCore.Qt.PointingHandCursor))
-        # Label:
-        self.label = QGraphicsTextItem(name, self)
-
-        # Inputs and outputs of the block:
-        self.inputs = []
-        self.inputs.append( PortItem('a', self) )
-        self.inputs.append( PortItem('b', self) )
-        self.inputs.append( PortItem('c', self) )
-        self.outputs = []
-        self.outputs.append( PortItem('y', self) )
-        # Update size:
-        self.changeSize(w, h)
-   
-    def editParameters(self):
-        pd = ParameterDialog(self.window())
-        pd.exec_()
-     
-    def delete(self):
-        for iport in self.inputs:
-            if iport.connection is not None :
-                iport.connection.delete()
-                if iport.connection.getFromPort() == iport :
-                    iport.connection.getToPort().connection = None
-                elif iport.connection.getToPort() == iport :
-                    iport.connection.getFromPort().connection = None
-                iport.connection = None
-        for oport in self.outputs:
-            if oport.connection is not None :
-                oport.connection.delete()
-                if oport.connection.getFromPort() == oport :
-                    oport.connection.getToPort().connection = None
-                elif oport.connection.getToPort() == oport :
-                    oport.connection.getFromPort().connection = None
-                oport.connection = None
-        editor.diagramScene.removeItem(self)
-     
-    def changeSize(self, w, h):
-        """ Resize block function """
-        # Limit the block size:
-        if h < 20:
-            h = 20
-        if w < 40:
-            w = 40
-        self.setRect(0.0, 0.0, w, h)
-        # center label:
-        rect = self.label.boundingRect()
-        lw, lh = rect.width(), rect.height()
-        lx = (w - lw) / 2
-        ly = (h - lh) / 2
-        self.label.setPos(lx, ly)
-        # Update port positions:
-        if len(self.inputs) == 1:
-            self.inputs[0].setPos(-4, h / 2)
-        elif len(self.inputs) > 1:
-            y = 5
-            dy = (h - 10) / (len(self.inputs) - 1)
-            for inp in self.inputs:
-                inp.setPos(-4, y)
-                y += dy
-        if len(self.outputs) == 1:
-            self.outputs[0].setPos(w+4, h / 2)
-        elif len(self.outputs) > 1:
-            y = 5
-            dy = (h - 10) / (len(self.outputs) + 0)
-            for outp in self.outputs:
-                outp.setPos(w+4, y)
-                y += dy
-        return w, h
-
+        
 class RunnerParameterDialog(QDialog):
     def __init__(self, parent=None, component=None):
         super(RunnerParameterDialog, self).__init__(parent)
@@ -246,92 +125,52 @@ class RunnerParameterDialog(QDialog):
         self.close()
     def Cancel(self):
         self.close()
-        
-class RunnerBlock(QGraphicsRectItem):
-    def __init__(self, parent=None):
-        super(RunnerBlock, self).__init__(parent)
-        name='Runner'
-        w = 60.0
-        h = 40.0
-        # Properties of the rectangle:
-        self.setPen(QtGui.QPen(QtCore.Qt.blue, 2))
-        self.setBrush(QtGui.QBrush(QtCore.Qt.lightGray))
-        self.setFlags(self.ItemIsSelectable | self.ItemIsMovable)
-        self.setCursor(QCursor(QtCore.Qt.PointingHandCursor))
-        # Label:
-        self.label = QGraphicsTextItem(name, self)
-        # Component:
-        self.component = ei_img.EiImageRunnerComponent( 'Edge Impulse Image Runner' , ei_img.EiImageRunnerProcedure() )
-        self.component.bind_port( 'output', ez.Output() )
-        self.component.set_property('model','modelfile.eim')
-        self.component.set_property('devno',0)
-        # Inputs and outputs of the block:
-        self.inputs = []
-        self.outputs = []
-        self.outputs.append( PortItem('output', self) )
-        # Update size:
-        self.changeSize(w, h)
-   
-    def editParameters(self):
-        pd = RunnerParameterDialog(self.window(),self.component)
-        pd.exec_()
-     
-    def delete(self):
-        for iport in self.inputs:
-            if iport.connection is not None :
-                iport.connection.delete()
-                if iport.connection.getFromPort() == iport :
-                    iport.connection.getToPort().connection = None
-                elif iport.connection.getToPort() == iport :
-                    iport.connection.getFromPort().connection = None
-                iport.connection = None
-        for oport in self.outputs:
-            if oport.connection is not None :
-                oport.connection.delete()
-                if oport.connection.getFromPort() == oport :
-                    oport.connection.getToPort().connection = None
-                elif oport.connection.getToPort() == oport :
-                    oport.connection.getFromPort().connection = None
-                oport.connection = None
-        editor.diagramScene.removeItem(self)
-     
-    def changeSize(self, w, h):
-        """ Resize block function """
-        # Limit the block size:
-        if h < 20:
-            h = 20
-        if w < 40:
-            w = 40
-        self.setRect(0.0, 0.0, w, h)
-        # center label:
-        rect = self.label.boundingRect()
-        lw, lh = rect.width(), rect.height()
-        lx = (w - lw) / 2
-        ly = (h - lh) / 2
-        self.label.setPos(lx, ly)
-        # Update port positions:
-        if len(self.inputs) == 1:
-            self.inputs[0].setPos(-4, h / 2)
-        elif len(self.inputs) > 1:
-            y = 5
-            dy = (h - 10) / (len(self.inputs) - 1)
-            for inp in self.inputs:
-                inp.setPos(-4, y)
-                y += dy
-        if len(self.outputs) == 1:
-            self.outputs[0].setPos(w+4, h / 2)
-        elif len(self.outputs) > 1:
-            y = 5
-            dy = (h - 10) / (len(self.outputs) + 0)
-            for outp in self.outputs:
-                outp.setPos(w+4, y)
-                y += dy
-        return w, h
 
-class ResultBlock(QGraphicsRectItem):
-    def __init__(self, parent=None):
-        super(ResultBlock, self).__init__(parent)
-        name='Result'
+class PortItem(QGraphicsEllipseItem):
+    """ Represents a port to a subsystem """
+    def __init__(self, name, parent=None):
+        QGraphicsEllipseItem.__init__(self, QRectF(-6,-6,12.0,12.0), parent)
+        self.setCursor(QCursor(QtCore.Qt.CrossCursor))
+        # Properties:
+        self.setBrush(QBrush(Qt.red))
+        # Name:
+        self.name = name
+        self.posCallbacks = []
+        self.setFlag(self.ItemSendsScenePositionChanges, True)
+        # Connection:
+        self.connection = None
+        # BlockItem:
+        self.blockItem = parent
+    def itemChange(self, change, value):
+        if change == self.ItemScenePositionHasChanged:
+            for cb in self.posCallbacks:
+                cb(value)
+            return value
+        return super(PortItem, self).itemChange(change, value)
+    def mousePressEvent(self, event):
+        editor.startConnection(self)
+    def portDisconnection(self):
+        if self.connection is not None :
+            print(self.connection)
+            self.connection.delete()
+            if self.connection.getFromPort() == self :
+                self.connection.getToPort().connection = None
+            elif self.connection.getToPort() == self :
+                self.connection.getFromPort().connection = None
+            self.connection = None
+
+class BlockItem(QGraphicsRectItem):
+    """ 
+    Represents a block in the diagram
+    Has an x and y and width and height
+    width and height can only be adjusted with a tip in the lower right corner.
+
+    - in and output ports
+    - parameters
+    - description
+    """
+    def __init__(self, name='Untitled', block_item_component=None, parent=None):
+        super(BlockItem, self).__init__(parent)
         w = 60.0
         h = 40.0
         # Properties of the rectangle:
@@ -341,20 +180,36 @@ class ResultBlock(QGraphicsRectItem):
         self.setCursor(QCursor(QtCore.Qt.PointingHandCursor))
         # Label:
         self.label = QGraphicsTextItem(name, self)
+
+        self.block_item_component = block_item_component
+
         # Component:
-        self.component = ez.Component( 'Image Classify Result Procedure', None, None, ei_img.ImageClassifyResultProcedure() )
-        self.component.bind_port( 'input', ez.Input())
-        self.component.bind_port( 'output', ez.Output())
-        # Inputs and outputs of the block:
-        self.inputs = []
-        self.inputs.append( PortItem('input', self) )
-        self.outputs = []
-        self.outputs.append( PortItem('output', self) )
+        self.component = None
+        if self.block_item_component is not None :
+            self.block_item_component.set_block_item(self)
+            self.block_item_component.setup_component()
+            # Inputs and outputs of the block:
+            self.inputs = []
+            self.outputs = []
+            self.block_item_component.setup_input_output_port()
+        else :
+            # Inputs and outputs of the block:
+            self.inputs = []
+            self.inputs.append( PortItem('a', self) )
+            self.inputs.append( PortItem('b', self) )
+            self.inputs.append( PortItem('c', self) )
+            self.outputs = []
+            self.outputs.append( PortItem('y', self) )
+            
         # Update size:
         self.changeSize(w, h)
    
     def editParameters(self):
-        pass
+        if self.block_item_component is not None :
+            self.block_item_component.exec_parameter_dialog()
+        else :
+            pd = ParameterDialog(self.window())
+            pd.exec_()
      
     def delete(self):
         for iport in self.inputs:
@@ -407,91 +262,62 @@ class ResultBlock(QGraphicsRectItem):
                 outp.setPos(w+4, y)
                 y += dy
         return w, h
-        
-class ShowBlock(QGraphicsRectItem):
-    def __init__(self, parent=None):
-        super(ShowBlock, self).__init__(parent)
-        name='Show'
-        w = 60.0
-        h = 40.0
-        # Properties of the rectangle:
-        self.setPen(QtGui.QPen(QtCore.Qt.blue, 2))
-        self.setBrush(QtGui.QBrush(QtCore.Qt.lightGray))
-        self.setFlags(self.ItemIsSelectable | self.ItemIsMovable)
-        self.setCursor(QCursor(QtCore.Qt.PointingHandCursor))
-        # Label:
-        self.label = QGraphicsTextItem(name, self)
-        # Component:
-        #self.component = ez.Component( 'Image Show Procedure', None, None, ei_img.ImageShowProcedure() )
-        self.component = ez.Component( 'Image Show Procedure', None, None, None )
-        self.component.bind_port( 'input', ez.Input())
-        # Inputs and outputs of the block:
-        self.inputs = []
-        self.inputs.append( PortItem('input', self) )
-        self.outputs = []
-        # Update size:
-        self.changeSize(w, h)
-   
-    def editParameters(self):
-        pass
-     
-    def delete(self):
-        for iport in self.inputs:
-            if iport.connection is not None :
-                iport.connection.delete()
-                if iport.connection.getFromPort() == iport :
-                    iport.connection.getToPort().connection = None
-                elif iport.connection.getToPort() == iport :
-                    iport.connection.getFromPort().connection = None
-                iport.connection = None
-        for oport in self.outputs:
-            if oport.connection is not None :
-                oport.connection.delete()
-                if oport.connection.getFromPort() == oport :
-                    oport.connection.getToPort().connection = None
-                elif oport.connection.getToPort() == oport :
-                    oport.connection.getFromPort().connection = None
-                oport.connection = None
-        editor.diagramScene.removeItem(self)
-     
-    def changeSize(self, w, h):
-        """ Resize block function """
-        # Limit the block size:
-        if h < 20:
-            h = 20
-        if w < 40:
-            w = 40
-        self.setRect(0.0, 0.0, w, h)
-        # center label:
-        rect = self.label.boundingRect()
-        lw, lh = rect.width(), rect.height()
-        lx = (w - lw) / 2
-        ly = (h - lh) / 2
-        self.label.setPos(lx, ly)
-        # Update port positions:
-        if len(self.inputs) == 1:
-            self.inputs[0].setPos(-4, h / 2)
-        elif len(self.inputs) > 1:
-            y = 5
-            dy = (h - 10) / (len(self.inputs) - 1)
-            for inp in self.inputs:
-                inp.setPos(-4, y)
-                y += dy
-        if len(self.outputs) == 1:
-            self.outputs[0].setPos(w+4, h / 2)
-        elif len(self.outputs) > 1:
-            y = 5
-            dy = (h - 10) / (len(self.outputs) + 0)
-            for outp in self.outputs:
-                outp.setPos(w+4, y)
-                y += dy
-        return w, h
-        
+                
 class ArrowItem(QGraphicsLineItem):
     def __init__(self):
         super(ArrowItem, self).__init__(None)
         self.setPen(QtGui.QPen(QtCore.Qt.red,2))
         self.setFlag(self.ItemIsSelectable, True)
+
+class BlockItemComponent :
+    def __init__(self):
+        self._block_item = None
+    def set_block_item(self, block_item):
+        self._block_item = block_item
+    def setup_component(self):
+        pass
+    def setup_input_output_port(self):
+        pass
+    def exec_parameter_dialog(self):
+        pass
+
+class RunnerBlockItemComponent(BlockItemComponent):
+    def __init__(self):
+        super().__init__()
+    def setup_component(self):
+        self._block_item.component = ei_img.EiImageRunnerComponent( 'Edge Impulse Image Runner' , ei_img.EiImageRunnerProcedure() )
+        self._block_item.component.bind_port( 'output', ez.Output() )
+        self._block_item.component.set_property('model','modelfile.eim')
+        self._block_item.component.set_property('devno',0)
+    def setup_input_output_port(self):
+        self._block_item.outputs.append( PortItem('output', self._block_item) )
+    def exec_parameter_dialog(self):
+        pd = RunnerParameterDialog(self._block_item.window(),self._block_item.component)
+        pd.exec_()
+        
+class ResultBlockItemComponent(BlockItemComponent):
+    def __init__(self):
+        super().__init__()
+    def setup_component(self):
+        self._block_item.component = ez.Component( 'Image Classify Result Procedure', None, None, ei_img.ImageClassifyResultProcedure() )
+        self._block_item.component.bind_port( 'input', ez.Input())
+        self._block_item.component.bind_port( 'output', ez.Output())
+    def setup_input_output_port(self):
+        self._block_item.inputs.append( PortItem('input', self._block_item) )
+        self._block_item.outputs.append( PortItem('output', self._block_item) )
+    def exec_parameter_dialog(self):
+        pass
+
+class ShowBlockItemComponent(BlockItemComponent):
+    def __init__(self):
+        super().__init__()
+    def setup_component(self):
+        self._block_item.component = ez.Component( 'Image Show Procedure', None, None, None )
+        self._block_item.component.bind_port( 'input', ez.Input())
+    def setup_input_output_port(self):
+        self._block_item.inputs.append( PortItem('input', self._block_item) )
+    def exec_parameter_dialog(self):
+        pass     
 
 class EditorGraphicsView(QGraphicsView):
     def __init__(self, scene, parent=None):
@@ -505,15 +331,14 @@ class EditorGraphicsView(QGraphicsView):
     def dropEvent(self, event):
         if event.mimeData().hasFormat('component/name'):
             name = str(event.mimeData().data('component/name'),'utf-8')
-            
+            block_item_component = None
             if name == 'Runner':
-                b1 = RunnerBlock()
+                block_item_component = RunnerBlockItemComponent()
             elif name == 'Result':
-                b1 = ResultBlock()
+                block_item_component = ResultBlockItemComponent()
             elif name == 'Show':
-                b1 = ShowBlock()
-            else:
-                b1 = BlockItem(name)
+                block_item_component = ShowBlockItemComponent()
+            b1 = BlockItem(name,block_item_component)    
             b1.setPos(self.mapToScene(event.pos()))
             self.scene().addItem(b1)
             # DEBUG
@@ -546,7 +371,7 @@ class DiagramScene(QGraphicsScene):
         pos = event.scenePos()
         items = self.items(pos)
         for item in items:
-            if type(item) is BlockItem or type(item) is RunnerBlock or type(item) is ResultBlock or type(item) is ShowBlock :
+            if type(item) is BlockItem:
                 menu = QMenu()
                 de = menu.addAction('Delete')
                 de.triggered.connect(item.delete)
@@ -574,7 +399,7 @@ class RunnerThread(QtCore.QThread):
                 data = iport.get_input_port_data()
                 if data is not None :
                     self.change_pixmap_signal.emit(data)
-
+                    
 class DiagramEditor(QWidget):
     def __init__(self, parent=None):
         QWidget.__init__(self, parent)
@@ -668,13 +493,13 @@ class DiagramEditor(QWidget):
             runner = None
             items = self.diagramView.scene().items()
             for item in items:
-                if type(item) is RunnerBlock:
+                if type(item) is BlockItem and type(item.block_item_component) is RunnerBlockItemComponent  :
                     runner = item.component
                     break
             show = None
             items = self.diagramView.scene().items()
             for item in items:
-                if type(item) is ShowBlock:
+                if type(item) is BlockItem and type(item.block_item_component) is ShowBlockItemComponent:
                     show = item.component
                     break
             if runner is not None :
