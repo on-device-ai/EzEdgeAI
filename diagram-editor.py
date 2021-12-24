@@ -338,6 +338,15 @@ class EditorGraphicsView(QGraphicsView):
                 block_item_component = ResultBlockItemComponent()
             elif name == 'Show':
                 block_item_component = ShowBlockItemComponent()
+            items = self.scene().items()
+            for item in items:
+                if type(item) is BlockItem:
+                    if block_item_component is not None and type(item.block_item_component) == type(block_item_component) :
+                        # DEBUG
+                        print(type(item.block_item_component))
+                        print(type(block_item_component))
+                        block_item_component = None
+                        return
             b1 = BlockItem(name,block_item_component)    
             b1.setPos(self.mapToScene(event.pos()))
             self.scene().addItem(b1)
@@ -493,13 +502,13 @@ class DiagramEditor(QWidget):
             runner = None
             items = self.diagramView.scene().items()
             for item in items:
-                if type(item) is BlockItem and type(item.block_item_component) is RunnerBlockItemComponent  :
+                if type(item) is BlockItem and type(item.block_item_component) is RunnerBlockItemComponent :
                     runner = item.component
                     break
             show = None
             items = self.diagramView.scene().items()
             for item in items:
-                if type(item) is BlockItem and type(item.block_item_component) is ShowBlockItemComponent:
+                if type(item) is BlockItem and type(item.block_item_component) is ShowBlockItemComponent :
                     show = item.component
                     break
             if runner is not None :
@@ -529,11 +538,14 @@ class DiagramEditor(QWidget):
         convert_to_Qt_format = QtGui.QImage(rgb_image.data, w, h, bytes_per_line, QtGui.QImage.Format_RGB888)
         p = convert_to_Qt_format.scaled(self.show_w,self.show_h, Qt.KeepAspectRatio)
         return QPixmap.fromImage(p)
-                
+
+def initDiagramEditor(diagram_editor):
+    global editor
+    editor = diagram_editor 
+ 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    global editor
-    editor = DiagramEditor()
+    initDiagramEditor(DiagramEditor())
     editor.show()
     editor.resize(1024, 400)
     app.exec_()
