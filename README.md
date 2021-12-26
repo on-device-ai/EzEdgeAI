@@ -1,7 +1,7 @@
 # EzEdgeAI  
 A concept project that uses a low-code/no-code approach to implement deep learning inference on devices. It provides a componentized framework (such as [Picolo](https://tinyurl.com/ywn8bvb3)) and a visual flow-based programming development environment.  
   
-![211130](https://user-images.githubusercontent.com/44540872/143999838-4a8b26e8-ead8-4083-a7b2-8b76e1fcc7d7.png)  
+![211226](https://user-images.githubusercontent.com/44540872/147409247-a171e467-b929-4cf7-aed6-1ec91de900ae.png)  
   
 This project implemented the "[Edge Impulse for Linux](https://docs.edgeimpulse.com/docs/edge-impulse-for-linux)" [Python SDK](https://docs.edgeimpulse.com/docs/linux-python-sdk) on the [Raspberry Pi 4](https://docs.edgeimpulse.com/docs/raspberry-pi-4) development board and used "[Tutorial: Object Detection](https://docs.edgeimpulse.com/docs/object-detection)" as a demonstration. The operation steps on the Raspberry Pi 4 development board are as follows:  
 
