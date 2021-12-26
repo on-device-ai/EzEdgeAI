@@ -1,5 +1,5 @@
 # EzEdgeAI  
-A concept project that uses a low-code/no-code approach to implement deep learning inference on devices. It provides a componentized framework (reference [Picolo](https://tinyurl.com/ywn8bvb3)) and a visual flow-based programming development environment.  
+A concept project that uses a low-code/no-code approach to implement deep learning inference on devices. It provides a componentized framework (such as [Picolo](https://tinyurl.com/ywn8bvb3)) and a visual flow-based programming development environment.  
   
 ![211130](https://user-images.githubusercontent.com/44540872/143999838-4a8b26e8-ead8-4083-a7b2-8b76e1fcc7d7.png)  
   
