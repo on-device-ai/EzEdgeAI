@@ -63,6 +63,29 @@ class ParameterDialog(QDialog):
         self.button.clicked.connect(self.OK)
     def OK(self):
         self.close()
+
+class RunnerThread(QtCore.QThread):
+    change_pixmap_signal = pyqtSignal(np.ndarray)
+    def __init__(self, runner, show, parent=None):
+        QThread.__init__(self, parent)
+        self.runner = runner
+        self.show = show
+        self._isRunning = True
+    def run(self):
+        if not self._isRunning:
+            self._isRunning = True
+        self.runner.start_runner_process()
+        while self._isRunning == True:
+            self.runner.process()
+            if self.show is not None :
+                iport = self.show.get_port('input')
+                data = iport.get_input_port_data()
+                if data is not None :
+                    self.change_pixmap_signal.emit(data)
+        self.runner.stop_runner_process()
+        print("finished...")
+    def stop(self):
+        self._isRunning = False
         
 class RunnerParameterDialog(QDialog):
     def __init__(self, parent=None, component=None):
@@ -70,6 +93,9 @@ class RunnerParameterDialog(QDialog):
         self.component = component
         self.model = None
         self.devno = None
+        self.proc_run = False
+        self.runner_work = None
+        self.work_stopping = False
         # verticalLayout
         self.verticalLayout = QVBoxLayout(self)
         # horizontalLayout1
@@ -93,11 +119,11 @@ class RunnerParameterDialog(QDialog):
         self.horizontalLayout2.addWidget(self.edit2)
         # horizontalLayout3
         self.horizontalLayout3 = QHBoxLayout(self)
-        self.ok_button = QPushButton('&OK', self)
-        self.ok_button.clicked.connect(self.OK)
-        self.cancel_button = QPushButton('&Cancel', self)
+        self.run_button = QPushButton('&Run', self)
+        self.run_button.clicked.connect(self.Run)
+        self.cancel_button = QPushButton('&Exit', self)
         self.cancel_button.clicked.connect(self.Cancel)
-        self.horizontalLayout3.addWidget(self.ok_button)
+        self.horizontalLayout3.addWidget(self.run_button)
         self.horizontalLayout3.addWidget(self.cancel_button)
         # add layout
         self.verticalLayout.addLayout(self.horizontalLayout1)
@@ -111,8 +137,18 @@ class RunnerParameterDialog(QDialog):
             head, tail = os.path.split( filenames[0] )
             self.model = tail    
     def editTextChanged(self, text):
-        self.devno = text        
-    def OK(self):
+        self.devno = text
+    def _work_start(self):
+        self.runner_work.start()  
+        self.proc_run = True
+        self.run_button.setText("Stop")
+    def _work_stop(self):
+        self.runner_work.stop()
+        self.runner_work.quit()
+        self.runner_work.wait()
+        self.proc_run = False
+        self.run_button.setText("&Run")
+    def Run(self):
         if self.component is not None:
             if self.model is not None:
                 self.component.set_property('model',self.model)
@@ -122,8 +158,33 @@ class RunnerParameterDialog(QDialog):
                 self.component.set_property('devno',int(self.devno))
                 # DEBUG
                 print(self.component.get_property('devno'))
-        self.close()
+            if self.runner_work is None :
+                show = None
+                component = self.component
+                while True:
+                    try:
+                        target_port = component.get_port( 'output' ).get_ref()
+                    except UnknownPort:
+                        break
+                    if target_port is None :
+                        break
+                    component = target_port.get_component()
+                    # DEBUG
+                    print(component.get_name())
+                    if component.get_name() == 'Image Show Procedure' :
+                        show = component  
+                        break        
+                runner = self.component
+                self.runner_work = RunnerThread(runner,show)
+                self.runner_work.change_pixmap_signal.connect(editor.update_image)
+            if self.runner_work is not None :
+                if self.proc_run is False:
+                    self._work_start()
+                else :
+                    self._work_stop()
     def Cancel(self):
+        if self.proc_run is True:
+            self._work_stop()
         self.close()
 
 class PortItem(QGraphicsEllipseItem):
@@ -393,41 +454,17 @@ class DiagramScene(QGraphicsScene):
                     di = menu.addAction('Disconnection')
                     di.triggered.connect(item.portDisconnection)
                     menu.exec_(event.screenPos())
-
-class RunnerThread(QtCore.QThread):
-    change_pixmap_signal = pyqtSignal(np.ndarray)
-    def __init__(self, runner, show, parent=None):
-        QThread.__init__(self, parent)
-        self.runner = runner
-        self.show = show
-    def run(self):
-        while True:
-            self.runner.process()
-            if self.show is not None :
-                iport = self.show.get_port('input')
-                data = iport.get_input_port_data()
-                if data is not None :
-                    self.change_pixmap_signal.emit(data)
                     
 class DiagramEditor(QWidget):
     def __init__(self, parent=None):
         QWidget.__init__(self, parent)
         self.setWindowTitle("Diagram editor")
-
-        self.proc_run = False
-        self.runner_work = None
         
         self.show_w = 320
         self.show_h = 320
 
         # Widget layout and child widgets:
-        self.verticalLayout = QVBoxLayout(self)
-        self.runButton = QPushButton()
-        self.runButton.setText("Start")
-        self.runButton.clicked.connect(self.runButton_clicked)
-        self.verticalLayout.addWidget(self.runButton)
         self.horizontalLayout = QHBoxLayout(self)
-        self.verticalLayout.addLayout(self.horizontalLayout)
         self.image_label = QLabel(self)
         gray = QPixmap(self.show_w,self.show_h)
         gray.fill(QColor('darkGray'))
@@ -496,34 +533,7 @@ class DiagramEditor(QWidget):
                     from_port.connection = self.startedConnection
                 else :
                     self.startedConnection.delete()
-            self.startedConnection = None
-    def runButton_clicked(self):
-        if self.runner_work is None :
-            runner = None
-            items = self.diagramView.scene().items()
-            for item in items:
-                if type(item) is BlockItem and type(item.block_item_component) is RunnerBlockItemComponent :
-                    runner = item.component
-                    break
-            show = None
-            items = self.diagramView.scene().items()
-            for item in items:
-                if type(item) is BlockItem and type(item.block_item_component) is ShowBlockItemComponent :
-                    show = item.component
-                    break
-            if runner is not None :
-                self.runner_work = RunnerThread(runner,show)
-                self.runner_work.change_pixmap_signal.connect(self.update_image)
-        if self.runner_work is not None :
-            if self.proc_run is False:
-                self.runner_work.start()
-                self.runner_work.runner.start_runner_process()
-                self.proc_run = True
-                self.runButton.setText("Running ...")
-    def closeEvent(self, event):
-        if self.proc_run is True:
-            self.runner_work.runner.stop_runner_process()
-            self.proc_run = False            
+            self.startedConnection = None         
     @pyqtSlot(np.ndarray)
     def update_image(self, cv_img):
         """Updates the image_label with a new opencv image"""

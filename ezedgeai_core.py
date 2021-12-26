@@ -39,6 +39,8 @@ class Component :
     def process( self ) :
         if self._procedure is not None :
             self._procedure.proc()
+    def get_name( self ) :
+        return self._name
     def get_port( self , name ):
         if name not in self._ports :
             raise UnknownPort
@@ -56,6 +58,8 @@ class Port :
         self._component = None
     def set_component( self , component ):
         self._component = component
+    def get_component( self ):
+        return self._component
     def invoke( self , data ):
         pass
 
@@ -78,6 +82,8 @@ class Output ( Port ):
         self._ref = None
     def set_ref( self , ref ):
         self._ref = ref
+    def get_ref( self ):
+        return self._ref
     def invoke( self , data ):
         self._data = data
         if self._ref is None :
