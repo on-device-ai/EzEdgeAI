@@ -1,33 +1,9 @@
 # EzEdgeAI  
-A concept project that uses a low-code/no-code approach to implement deep learning inference on devices. It provides a componentized framework (such as [Picolo](https://tinyurl.com/ywn8bvb3)) and a visual flow-based programming development environment.  
   
-![211226](https://user-images.githubusercontent.com/44540872/147409247-a171e467-b929-4cf7-aed6-1ec91de900ae.png)  
+> The version that previously implemented the "Edge Impulse for Linux" Python SDK on the Raspberry Pi 4 is now in the "[concept](https://github.com/on-device-ai/EzEdgeAI/tree/concept)" branch.  
   
-This project implemented the "[Edge Impulse for Linux](https://docs.edgeimpulse.com/docs/edge-impulse-for-linux)" [Python SDK](https://docs.edgeimpulse.com/docs/linux-python-sdk) on the [Raspberry Pi 4](https://docs.edgeimpulse.com/docs/raspberry-pi-4) development board and used "[Tutorial: Object Detection](https://docs.edgeimpulse.com/docs/object-detection)" as a demonstration. The operation steps on the Raspberry Pi 4 development board are as follows:  
-
-* Install the Edge Impulse for Linux CLI:  
-`curl -sL https://deb.nodesource.com/setup_12.x | sudo bash -`  
-`sudo apt install -y gcc g++ make build-essential nodejs sox gstreamer1.0-tools gstreamer1.0-plugins-good gstreamer1.0-plugins-base gstreamer1.0-plugins-base-apps`  
-`npm config set user root && sudo npm install edge-impulse-linux -g --unsafe-perm`  
-  
-* Connecting to Edge Impulse:  
-`edge-impulse-linux --disable-camera`  
-> For unknown reasons, the edge-impulse-linux program will not detect that my USB Camera (UVC) is on the Raspberry Pi 4. So add the --disable-camera option to avoid this issue.  
-  
-* Install the SDK:    
-`sudo apt-get install libatlas-base-dev libportaudio0 libportaudio2 libportaudiocpp0 portaudio19-dev`  
-`pip3 install edge_impulse_linux -i https://pypi.python.org/simple`  
-  
-* Update the NumPy:  
-`sudo pip3 install -U numpy`  
-  
-* Download the model file via:  
-`edge-impulse-linux-runner --download modelfile.eim`  
-and put the model file in the project directory.
-  
-* Install the PyQt5:  
-`sudo apt-get install python3-pyqt5`  
-  
-* Run the EzEdgeAI project:  
-`python diagram-editor.py`
-  
+This project uses the "Low Code"/"No Code" approach to build a deep learning development environment. It includes a Python componentization framework and a [flow-based programming](https://en.wikipedia.org/wiki/Flow-based_programming) visual editor. The concept is as follows:  
+![220211_1](https://user-images.githubusercontent.com/44540872/153594650-99919ea8-ac20-486b-ab66-b6739e1a55e1.png)  
+Each unit of deep learning is componentized to achieve code reuse and to simplify the integration of flow-based programming. Components can be called directly from Python and integrated with the Jupyter Lab environment to achieve the "Low Code" approach. Or integrate components into flow-based visual programming using the [ryvencore-qt](https://github.com/leon-thomm/ryvencore-qt) library to achieve the "No Code" approach.  
+This project is still in the early stage of development. Currently, the object detection and inference function of Edge TPU ([Coral](https://coral.ai/products/accelerator/)) is componentized:  
+![220211_2](https://user-images.githubusercontent.com/44540872/153594745-185b06f1-7311-4305-a739-8c96de18ba65.png)  

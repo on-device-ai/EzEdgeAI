@@ -66,15 +66,18 @@ class Port :
 class Input( Port ):
     def __init__( self ):
         super( ).__init__( )
+        self._invoked = False
     def get_input_port_data( self ):
-        return self._data
+        if self._invoked is True :
+            return self._data
+        return None        
     def invoke( self , data ):
         self._data = data
         if self._component is None :
             raise UnboundPort
+        self._invoked = True
         self._component.process()
-    def put_data_to_port( self , data ):
-        self._data = data
+        self._invoked = False
  
 class Output ( Port ):
     def __init__( self ):
