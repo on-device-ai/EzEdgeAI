@@ -192,6 +192,8 @@ class ImageShowNode_MainWidget(rc.MWB, QLabel):
         rc.MWB.__init__(self, params)
         QLabel.__init__(self)
 
+        self._node_id = None
+
         self._img_show_w = 320
         self._img_show_h = 240
 
@@ -205,10 +207,16 @@ class ImageShowNode_MainWidget(rc.MWB, QLabel):
         layout.addWidget(self._image_label)
         self.setLayout(layout)
     
-    @Slot(np.ndarray)
-    def update_image(self, cv_img):
-        qt_img = self.convert_cv_qt(cv_img)
-        self._image_label.setPixmap(qt_img)
+    def set_node_id( self , node_id ):
+        self._node_id = node_id
+
+    @Slot(dict)
+    def update_image(self, image_info):
+        node_id = image_info['id']
+        if node_id is not None and node_id == self._node_id:
+            cv_img = image_info['img']
+            qt_img = self.convert_cv_qt(cv_img)
+            self._image_label.setPixmap(qt_img)
     def convert_cv_qt(self, cv_img):
         # rgb_image = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
         rgb_image = cv_img
@@ -227,19 +235,22 @@ class ImageShowNode(rc.Node):
     main_widget_class = ImageShowNode_MainWidget
     main_widget_pos = 'below ports'
     
-    change_pixmap_signal = Signal(np.ndarray)
+    change_pixmap_signal = Signal(dict)
 
     def __init__(self, params):
         super().__init__(params)
-    
+        self._node_id = id( self )
+
     def view_place_event(self):
+        self.main_widget().set_node_id( self._node_id )
         self.change_pixmap_signal.connect(self.main_widget().update_image)
-    
+
     def update_event(self, inp=-1):
         image = self.input(0)
         if image is not None and isinstance(image,Image.Image) is True:
             display_image = np.asarray(image)
-            self.change_pixmap_signal.emit(display_image)
+            image_info = {'id':self._node_id,'img':display_image}
+            self.change_pixmap_signal.emit(image_info)
             
 #####
 
