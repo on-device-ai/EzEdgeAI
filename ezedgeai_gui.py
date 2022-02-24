@@ -112,7 +112,15 @@ class CameraImageInputNode(rc.Node):
                 self.node_thread.quit()
                 self.node_thread.wait()
                 self.thread_start = False
-     
+    def remove_event( self ):
+        if self.node_thread is not None:
+            if self.thread_start is True :
+                self.node_thread.stop()
+                self.node_thread.quit()
+                self.node_thread.wait()
+                self.thread_start = False
+            self.node_thread = None
+
 #####
 
 class TFLiteInterpreterNode(rc.Node):
