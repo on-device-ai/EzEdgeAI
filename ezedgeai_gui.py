@@ -53,6 +53,7 @@ class CameraImageInputNode_MainWidget(QPushButton, rc.MWB):
     def __init__(self, params):
         rc.MWB.__init__(self, params)
         QPushButton.__init__(self)
+        self.setText('Start')
         self.clicked.connect(self.update_node)
 
 class CameraImageInputNodeThread(QThread):
@@ -99,18 +100,20 @@ class CameraImageInputNode(rc.Node):
     
     thread_start = False
     node_thread = None
-    
+        
     def update_event(self, inp=-1):
         if self.node_thread is None:
             self.node_thread = CameraImageInputNodeThread(self)
         if self.node_thread is not None:
             if self.thread_start is False :
-                self.node_thread.start()  
+                self.node_thread.start()
+                self.main_widget().setText('Stop')
                 self.thread_start = True
             else :
                 self.node_thread.stop()
                 self.node_thread.quit()
                 self.node_thread.wait()
+                self.main_widget().setText('Start')
                 self.thread_start = False
     def remove_event( self ):
         if self.node_thread is not None:
@@ -118,7 +121,7 @@ class CameraImageInputNode(rc.Node):
                 self.node_thread.stop()
                 self.node_thread.quit()
                 self.node_thread.wait()
-                self.thread_start = False
+            self.thread_start = False
             self.node_thread = None
 
 #####
