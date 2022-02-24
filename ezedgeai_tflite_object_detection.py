@@ -350,10 +350,11 @@ class TFLiteInterpreterProcedure( Procedure ) :
             result_oport = self._component.get_port( 'result' )
             model_meta = model_iport.get_input_port_data()
             image_data = image_iport.get_input_port_data()
-            if self._check_model_meta(model_meta, self._model_meta)is True :
-                self._model_meta = model_meta
-                # DEBUG
-                print('TFLiteInterpreterProcedure::proc() self._model_meta = ' + str(self._model_meta))
+            if model_meta is not None :
+                if self._check_model_meta(model_meta, self._model_meta)is True :
+                    self._model_meta = model_meta
+                    # DEBUG
+                    print('TFLiteInterpreterProcedure::proc() self._model_meta = ' + str(self._model_meta))
             elif image_data is not None :
                 if isinstance( image_data, str) is True :
                     command = image_data
