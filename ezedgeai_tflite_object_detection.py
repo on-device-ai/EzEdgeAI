@@ -351,7 +351,7 @@ class TFLiteInterpreterProcedure( Procedure ) :
             model_meta = model_iport.get_input_port_data()
             image_data = image_iport.get_input_port_data()
             if model_meta is not None :
-                if self._check_model_meta(model_meta, self._model_meta)is True :
+                if self._check_model_meta(model_meta, self._model_meta) is True :
                     self._model_meta = model_meta
                     # DEBUG
                     print('TFLiteInterpreterProcedure::proc() self._model_meta = ' + str(self._model_meta))
