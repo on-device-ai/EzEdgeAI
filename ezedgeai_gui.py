@@ -218,9 +218,7 @@ class ImageShowNode_MainWidget(rc.MWB, QLabel):
         p = convert_to_Qt_format.scaled(self._img_show_w,self._img_show_h, Qt.KeepAspectRatio)
         return QPixmap.fromImage(p)
 
-class ImageShowNode(rc.Node):
-
-    change_pixmap_signal = Signal(np.ndarray)    
+class ImageShowNode(rc.Node):  
 
     title = 'Image Show'
     init_inputs = [
@@ -228,6 +226,8 @@ class ImageShowNode(rc.Node):
     ]
     main_widget_class = ImageShowNode_MainWidget
     main_widget_pos = 'below ports'
+    
+    change_pixmap_signal = Signal(np.ndarray)  
     
     def __init__(self, params):
         super().__init__(params)
