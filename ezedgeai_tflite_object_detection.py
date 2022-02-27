@@ -403,9 +403,9 @@ class ObjectDetectionResultProcedure( Procedure ) :
             image_oport = self._component.get_port( 'image' )
             result_data = result_iport.get_input_port_data()
             if result_data is not None and isinstance(result_data, dict) is True :
-                image = result_data.get('image')
-                results = result_data.get('results')
-                labels = result_data.get('labels')
+                image = result_data.get( 'image' )
+                results = result_data.get( 'results' )
+                labels = result_data.get( 'labels' )
                 result_image = image.copy()
                 draw_objects(ImageDraw.Draw( result_image ), results, labels)
                 try:
