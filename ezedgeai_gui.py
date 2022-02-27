@@ -219,7 +219,9 @@ class ImageShowNode_MainWidget(rc.MWB, QLabel):
         return QPixmap.fromImage(p)
 
 class ImageShowNode(rc.Node):
-    
+
+    change_pixmap_signal = Signal(np.ndarray)    
+
     title = 'Image Show'
     init_inputs = [
         rc.NodeInputBP()
@@ -227,8 +229,6 @@ class ImageShowNode(rc.Node):
     main_widget_class = ImageShowNode_MainWidget
     main_widget_pos = 'below ports'
     
-    change_pixmap_signal = Signal(np.ndarray)
-
     def __init__(self, params):
         super().__init__(params)
     
