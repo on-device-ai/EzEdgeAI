@@ -406,9 +406,10 @@ class ObjectDetectionResultProcedure( Procedure ) :
                 image = result_data.get('image')
                 results = result_data.get('results')
                 labels = result_data.get('labels')
-                draw_objects(ImageDraw.Draw(image), results, labels)
+                result_image = image.copy()
+                draw_objects(ImageDraw.Draw( result_image ), results, labels)
                 try:
-                    image_oport.invoke( image )
+                    image_oport.invoke( result_image )
                 except PortNotConnected:
                     pass
         except UnknownPort:
