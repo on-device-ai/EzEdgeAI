@@ -49,6 +49,60 @@ class EdgeTpuModelNode(rc.Node):
         
 #####
 
+class EzEdgeAI_ThreadManager :
+    _instance = None
+    _thread_dict = None
+    def __new__( cls, *args, **kwargs): 
+        if cls._instance is None: 
+            cls._instance = super().__new__(cls) 
+        return cls._instance 
+    def __init__( self ):
+        if self._thread_dict is None :
+            self._thread_dict = {}
+    def start_thread( self, thread ):
+        is_valid_thread = False
+        if thread is not None :
+            thread_id = str( id( thread ) )
+            if thread_id in self._thread_dict :
+                is_valid_thread = True
+            else :
+                if isinstance( thread , QThread ) :
+                    self._thread_dict[ thread_id ] = {'thread' : thread , 'thread_start' : False}
+                    is_valid_thread = True
+                    # DEBUG
+                    print('EzEdgeAI_ThreadManager::start_thread() : self._thread_dict = ' + str( self._thread_dict ))
+        if is_valid_thread is True :
+            ezedgeai_thread = self._thread_dict[ thread_id ]
+            if ezedgeai_thread['thread_start'] is False :
+                ezedgeai_thread = self._thread_dict[ thread_id ]
+                ezedgeai_thread['thread'].start()
+                ezedgeai_thread['thread_start'] = True
+    def stop_thread( self, thread ):
+        if thread is not None :
+            thread_id = str( id( thread ) )
+            if thread_id in self._thread_dict :
+                ezedgeai_thread = self._thread_dict[ thread_id ]
+                if ezedgeai_thread['thread_start'] is True : 
+                    ezedgeai_thread['thread'].stop()
+                    ezedgeai_thread['thread'].quit()
+                    ezedgeai_thread['thread'].wait()
+                    ezedgeai_thread['thread_start'] = False
+    def remove_thread( self, thread ):
+        if thread is not None :
+            thread_id = str( id( thread ) )
+            if thread_id in self._thread_dict :
+                ezedgeai_thread = self._thread_dict[ thread_id ]
+                self.stop_thread( ezedgeai_thread['thread'] )
+                del self._thread_dict[ thread_id ]
+                # DEBUG
+                print('EzEdgeAI_ThreadManager::remove_thread() : self._thread_dict = ' + str( self._thread_dict ))
+    def stop_all_thread( self ):
+        for thread_id in self._thread_dict :
+          ezedgeai_thread = self._thread_dict[ thread_id ]
+          self.stop_thread( ezedgeai_thread['thread'] )
+          
+#####
+
 class CameraImageInputNode_MainWidget(QPushButton, rc.MWB):
     def __init__(self, params):
         rc.MWB.__init__(self, params)
@@ -98,32 +152,31 @@ class CameraImageInputNode(rc.Node):
     ]
     color = '#fcba03'
     
-    thread_start = False
-    node_thread = None
+    def __init__(self, params):
+        super().__init__(params)
+        self._node_thread = None
+        self._thread_start = False
+        self._thread_manager = EzEdgeAI_ThreadManager( )
+        # DEBUG
+        print('CameraImageInputNode::__init__() : self._thread_manager id = ' + str(id(self._thread_manager)))
         
-    def update_event(self, inp=-1):
-        if self.node_thread is None:
-            self.node_thread = CameraImageInputNodeThread(self)
-        if self.node_thread is not None:
-            if self.thread_start is False :
-                self.node_thread.start()
+    def update_event(self, inp=-1): 
+        if self._node_thread is None:
+            self._node_thread = CameraImageInputNodeThread(self)
+            self._thread_start = False         
+        if self._node_thread is not None:
+            if self._thread_start is False :
+                self._thread_manager.start_thread(self._node_thread)
                 self.main_widget().setText('Stop')
-                self.thread_start = True
+                self._thread_start = True
             else :
-                self.node_thread.stop()
-                self.node_thread.quit()
-                self.node_thread.wait()
+                self._thread_manager.stop_thread(self._node_thread)
                 self.main_widget().setText('Start')
-                self.thread_start = False
+                self._thread_start = False
     def remove_event( self ):
-        if self.node_thread is not None:
-            if self.thread_start is True :
-                self.node_thread.stop()
-                self.node_thread.quit()
-                self.node_thread.wait()
-            self.thread_start = False
-            self.node_thread = None
-
+        self._thread_manager.remove_thread( self._node_thread )
+        self._node_thread = None
+        
 #####
 
 class TFLiteInterpreterNode(rc.Node):
@@ -243,11 +296,22 @@ class ImageShowNode(rc.Node):
             
 #####
 
+class EzEdgeAI_MainWindow( QMainWindow ):
+    def __init__( self ):
+        super().__init__()
+        self._thread_manager = EzEdgeAI_ThreadManager( )
+        # DEBUG
+        print('EzEdgeAI_MainWindow::__init__() : self._thread_manager id = ' + str(id(self._thread_manager)))
+    def closeEvent(self,event):
+        # DEBUG
+        print('EzEdgeAI_MainWindow::closeEvent()')
+        self._thread_manager.stop_all_thread( )
+
 if __name__ == "__main__":
 
     # creating the application and a window
     app = QApplication()
-    mw = QMainWindow()
+    mw = EzEdgeAI_MainWindow()
 
     # creating the session, registering, creating script
     session = rc.Session()
