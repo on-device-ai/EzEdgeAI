@@ -1,6 +1,6 @@
 # EzEdgeAI  
   
-> Since this project is still in the early development stage, I will try to implement different applications for study.  
+> It is an experimental project using the architecture described in this article to implement different applications for study.  
 > The version that previously implemented "Edge Impulse for Linux" Python SDK on the Raspberry Pi 4 is in the "[concept](https://github.com/on-device-ai/EzEdgeAI/tree/concept)" branch.  
 > The version that previously implemented Edge TPU (Coral) object detection inference is in the "[coral](https://github.com/on-device-ai/EzEdgeAI/tree/coral)" branch.  
   
