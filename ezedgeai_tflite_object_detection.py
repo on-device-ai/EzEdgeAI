@@ -296,12 +296,13 @@ class CameraImageInputProcedure( Procedure ) :
             image_oport = self._component.get_port( 'image' )
             # Read frame from video
             img_cv = self._video_stream.read()
-            img_rgb = cv2.cvtColor(img_cv, cv2.COLOR_BGR2RGB)
-            image = Image.fromarray(img_rgb)
-            try:
-                image_oport.invoke( image )
-            except PortNotConnected:
-                pass   
+            if img_cv is not None :
+                img_rgb = cv2.cvtColor(img_cv, cv2.COLOR_BGR2RGB)
+                image = Image.fromarray(img_rgb)
+                try:
+                    image_oport.invoke( image )
+                except PortNotConnected:
+                    pass   
         except UnknownPort:
             pass
     
@@ -365,7 +366,13 @@ class TFLiteInterpreterProcedure( Procedure ) :
                         print('TFLiteInterpreterProcedure::proc() model meta data : ' + str(self._model_meta))
                         if command == 'start' and self._model_meta is not None :
                             self._labels = load_labels(self._model_meta.get('labels'))
-                            self._interpreter = make_interpreter(self._model_meta.get('model'))
+                            try :
+                                self._interpreter = make_interpreter(self._model_meta.get('model'))
+                            except Exception as e:
+                                # DEBUG
+                                print('TFLiteInterpreterProcedure::proc() : Exception = ' + str(e))
+                                self._interpreter = None
+                                return
                             self._interpreter.allocate_tensors()
                             property_name = 'threshold'
                             try :
