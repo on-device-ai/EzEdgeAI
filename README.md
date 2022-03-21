@@ -6,5 +6,5 @@
 > The version that currently implements the TinyML development environment is in the "[tinyml](https://github.com/on-device-ai/EzEdgeAI/tree/tinyml)" branch.  
   
 This project uses the "Low Code/No Code" approach to build a deep learning development environment for Edge AI or On-Device AI. It includes a component-based framework and a flow-based visual programming editor. The concept is as follows:  
-![220211_1](https://user-images.githubusercontent.com/44540872/153596578-665c400e-1d4e-436d-a628-d79644464f24.png)  
+![220321](https://user-images.githubusercontent.com/44540872/159204182-43c1aa27-e431-4fa8-a722-c69e64c8dfb4.png)  
 Deep learning procedures can be transformed into components to achieve code reuse and simplify the integration of flow-based programming. These components can be called directly from Python and integrated with the Jupyter Lab environment for a "low-code" approach. Or integrate these components into flow-based visual programming using the [ryvencore-qt](https://github.com/leon-thomm/ryvencore-qt) library to achieve the "No Code" approach.  
